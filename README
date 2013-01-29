@@ -1,0 +1,18 @@
+# pngquant
+#
+# http://pngquant.org/
+
+# Install libpng & zlib
+#
+# Alternatively, build libpng and zlib in these directories:
+# ../libpng
+# ../zlib
+
+make
+
+# Mac
+mv libpngquant.so libpngquant.jnilib
+
+
+# configure folder as native library location
+

@@ -5,7 +5,7 @@ VERSION = $(shell grep 'define PNGQUANT_VERSION' pngquant.c | egrep -Eo '1\.[0-9
 # if this line causes problems with non-GNU make, just remove it:
 CC := $(patsubst cc,gcc,$(CC))
 
-BIN ?= pngquant
+BIN ?= libpngquant.so
 PREFIX ?= /usr/local
 BINPREFIX = $(PREFIX)/bin
 
@@ -13,13 +13,13 @@ BINPREFIX = $(PREFIX)/bin
 CUSTOMLIBPNG ?= ../libpng
 CUSTOMZLIB ?= ../zlib
 
-CFLAGSOPT ?= -O3 -fearly-inlining -fstrict-aliasing -ffast-math -funroll-loops -fomit-frame-pointer -momit-leaf-frame-pointer -ffinite-math-only -fno-trapping-math -funsafe-loop-optimizations
+CFLAGSOPT ?= -O3 -fearly-inlining -fstrict-aliasing -ffast-math -funroll-loops -fomit-frame-pointer -momit-leaf-frame-pointer -ffinite-math-only -fno-trapping-math -funsafe-loop-optimizations -fPIC
 
-CFLAGS ?= -DNDEBUG -Wall -Wno-unknown-pragmas -I. -I$(CUSTOMLIBPNG) -I$(CUSTOMZLIB) -I/usr/local/include/ -I/usr/include/ -I/usr/X11/include/ $(CFLAGSOPT)
+CFLAGS ?= -DNDEBUG -Wall -Wno-unknown-pragmas -I. -I$(CUSTOMLIBPNG) -I$(CUSTOMZLIB) -I/System/Library/Frameworks/JavaVM.framework/Headers/ -I/usr/local/include/ -I/usr/include/ -I/usr/X11/include/ $(CFLAGSOPT)
 CFLAGS += -std=c99 $(CFLAGSADD)
 
 LDFLAGS ?= -L$(CUSTOMLIBPNG) -L$(CUSTOMZLIB) -L/usr/local/lib/ -L/usr/lib/ -L/usr/X11/lib/
-LDFLAGS += -lpng -lz -lm $(LDFLAGSADD)
+LDFLAGS += -lpng -lz -lm $(LDFLAGSADD) -shared
 
 OBJS = pngquant.o rwpng.o pam.o mediancut.o blur.o mempool.o viter.o nearest.o
 COCOA_OBJS = rwpng_cocoa.o
