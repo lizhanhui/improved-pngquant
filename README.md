@@ -10,9 +10,7 @@
 
 make
 
-# Mac
-mv libpngquant.so libpngquant.jnilib
+# Installation Mac
+ln -s libpngquant.so /Library/Java/Extensions/libpngquant.jnilib
 
-
-# configure folder as native library location
 
