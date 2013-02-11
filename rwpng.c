@@ -37,7 +37,6 @@
 #include "rwpng.h"
 
 static void rwpng_error_handler(png_structp png_ptr, png_const_charp msg);
-int rwpng_read_image24_cocoa(FILE *infile, png24_image *mainprog_ptr);
 
 
 void rwpng_version_info(FILE *fp)
@@ -51,9 +50,8 @@ void rwpng_version_info(FILE *fp)
 #endif
 }
 
-
 struct rwpng_read_data {
-    FILE *fp;
+    char *data;
     png_size_t bytes_read;
 };
 
@@ -61,9 +59,28 @@ static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t lengt
 {
     struct rwpng_read_data *read_data = (struct rwpng_read_data *)png_get_io_ptr(png_ptr);
 
-    png_size_t read = fread(data, 1, length, read_data->fp);
-    if (!read) png_error(png_ptr, "Read error");
-    read_data->bytes_read += read;
+    //png_size_t read = fread(data, 1, length, read_data->fp);
+
+    memcpy (data, read_data->data + read_data->bytes_read, length);
+
+    read_data->bytes_read += length;
+}
+
+static void user_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+	struct rwpng_write_data *write_data = (struct rwpng_write_data *)png_get_io_ptr(png_ptr);
+	png_size_t nsize = write_data->bytes_write + length;
+
+	if(write_data->data)
+		write_data->data = realloc(write_data->data, nsize);
+	else
+		write_data->data = malloc(nsize);
+
+	if(!write_data->data)
+		png_error(png_ptr, "Write Error");
+
+	memcpy(write_data->data + write_data->bytes_write, data, length);
+	write_data->bytes_write += length;
 }
 
 static png_bytepp rwpng_create_row_pointers(png_infop info_ptr, png_structp png_ptr, unsigned char *base, int height, int rowbytes)
@@ -88,7 +105,7 @@ static png_bytepp rwpng_create_row_pointers(png_infop info_ptr, png_structp png_
     26 = wrong PNG color type (no alpha channel)
  */
 
-pngquant_error rwpng_read_image24_libpng(FILE *infile, png24_image *mainprog_ptr)
+pngquant_error rwpng_read_image24_libpng(char *infile, png24_image *mainprog_ptr)
 {
     png_structp  png_ptr = NULL;
     png_infop    info_ptr = NULL;
@@ -202,17 +219,14 @@ pngquant_error rwpng_read_image24_libpng(FILE *infile, png24_image *mainprog_ptr
 }
 
 
-pngquant_error rwpng_read_image24(FILE *infile, png24_image *input_image_p)
+pngquant_error rwpng_read_image24(char *infile, png24_image *input_image_p)
 {
-#if USE_COCOA
-    return rwpng_read_image24_cocoa(infile, input_image_p);
-#else
+
     return rwpng_read_image24_libpng(infile, input_image_p);
-#endif
 }
 
 
-pngquant_error rwpng_write_image_init(png_image *mainprog_ptr, png_structpp png_ptr_p, png_infopp info_ptr_p, FILE *outfile)
+pngquant_error rwpng_write_image_init(png_image *mainprog_ptr, png_structpp png_ptr_p, png_infopp info_ptr_p, struct rwpng_write_data *write_data)
 {
     /* could also replace libpng warning-handler (final NULL), but no need: */
 
@@ -239,7 +253,9 @@ pngquant_error rwpng_write_image_init(png_image *mainprog_ptr, png_structpp png_
         return LIBPNG_INIT_ERROR;   /* libpng error (via longjmp()) */
     }
 
-    png_init_io(*png_ptr_p, outfile);
+    //png_init_io(*png_ptr_p, outfile);
+
+    png_set_write_fn(*png_ptr_p, write_data, user_write_data, NULL);
 
     png_set_compression_level(*png_ptr_p, Z_BEST_COMPRESSION);
 
@@ -271,12 +287,14 @@ void rwpng_set_gamma(png_infop info_ptr, png_structp png_ptr, double gamma)
     }
 }
 
-pngquant_error rwpng_write_image8(FILE *outfile, png8_image *mainprog_ptr)
+pngquant_error rwpng_write_image8(struct rwpng_write_data *write_data, png8_image *mainprog_ptr)
 {
     png_structp png_ptr;
     png_infop info_ptr;
 
-    pngquant_error retval = rwpng_write_image_init((png_image*)mainprog_ptr, &png_ptr, &info_ptr, outfile);
+    pngquant_error retval = rwpng_write_image_init((png_image*)mainprog_ptr, &png_ptr, &info_ptr, write_data);
+
+
     if (retval) return retval;
 
     // Palette images generally don't gain anything from filtering
@@ -315,12 +333,12 @@ pngquant_error rwpng_write_image8(FILE *outfile, png8_image *mainprog_ptr)
     return SUCCESS;
 }
 
-pngquant_error rwpng_write_image24(FILE *outfile, png24_image *mainprog_ptr)
+pngquant_error rwpng_write_image24(struct rwpng_write_data *write_data, png24_image *mainprog_ptr)
 {
     png_structp png_ptr;
     png_infop info_ptr;
 
-    pngquant_error retval = rwpng_write_image_init((png_image*)mainprog_ptr, &png_ptr, &info_ptr, outfile);
+    pngquant_error retval = rwpng_write_image_init((png_image*)mainprog_ptr, &png_ptr, &info_ptr, write_data);
     if (retval) return retval;
 
     rwpng_set_gamma(info_ptr, png_ptr, mainprog_ptr->gamma);
@@ -336,6 +354,8 @@ pngquant_error rwpng_write_image24(FILE *outfile, png24_image *mainprog_ptr)
     rwpng_write_end(&info_ptr, &png_ptr, row_pointers);
 
     free(row_pointers);
+
+
 
     return SUCCESS;
 }

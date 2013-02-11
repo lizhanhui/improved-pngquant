@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     Pngquant
  * Method:    compress
- * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ * Signature: ([B)[B
  */
-JNIEXPORT jint JNICALL Java_Pngquant_compress
-  (JNIEnv *, jobject, jstring, jstring);
+JNIEXPORT jbyteArray JNICALL Java_Pngquant_compress
+  (JNIEnv *, jobject, jbyteArray);
 
 /*
  * Class:     Pngquant
@@ -21,14 +21,6 @@ JNIEXPORT jint JNICALL Java_Pngquant_compress
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL Java_Pngquant_verbose
-  (JNIEnv *, jobject, jboolean);
-
-/*
- * Class:     Pngquant
- * Method:    force
- * Signature: (Z)V
- */
-JNIEXPORT void JNICALL Java_Pngquant_force
   (JNIEnv *, jobject, jboolean);
 
 /*

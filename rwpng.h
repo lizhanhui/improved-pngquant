@@ -82,13 +82,18 @@ typedef union {
     png8_image png8;
 } png_image;
 
+struct rwpng_write_data {
+    char *data;
+    png_size_t bytes_write;
+};
+
 /* prototypes for public functions in rwpng.c */
 
 void rwpng_version_info(FILE *fp);
 
-pngquant_error rwpng_read_image24(FILE *infile, png24_image *mainprog_ptr);
+pngquant_error rwpng_read_image24(char *infile, png24_image *mainprog_ptr);
 
-pngquant_error rwpng_write_image8(FILE *outfile, png8_image *mainprog_ptr);
-pngquant_error rwpng_write_image24(FILE *outfile, png24_image *mainprog_ptr);
+pngquant_error rwpng_write_image8(struct rwpng_write_data *write_data, png8_image *mainprog_ptr);
+pngquant_error rwpng_write_image24(struct rwpng_write_data *write_data, png24_image *mainprog_ptr);
 
 #endif

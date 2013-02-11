@@ -1,3 +1,8 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 
 public class Pngquant {
 	
@@ -5,13 +10,29 @@ public class Pngquant {
 	     System.loadLibrary("pngquant");
 	}
 	
-	public native int compress(String in, String out);
+	private native byte[] compress(byte[] in);
 	
 	public native void verbose(boolean enabled);
 	
-	public native void force(boolean enabled);
-	
 	private native void quality(int min, int max);
+
+	
+	public InputStream compress(InputStream in) throws IOException
+	{		
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+		int nRead;
+		byte[] data = new byte[16384];
+
+		while ((nRead = in.read(data, 0, data.length)) != -1) {
+		  buffer.write(data, 0, nRead);
+		}
+
+		buffer.flush();
+		
+		
+		return new ByteArrayInputStream(compress(buffer.toByteArray()));
+	}
 	
 	
 	/**
@@ -20,14 +41,6 @@ public class Pngquant {
 	public void verbose()
 	{
 		verbose(true);
-	}
-	
-	/**
-	 * overwrite existing output files
-	 */
-	public void force()
-	{
-		force(true);
 	}
 	
 	/**

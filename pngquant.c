@@ -69,9 +69,9 @@ static void prepare_image(pngquant_image *input_image, struct pngquant_options *
 static void pngquant_image_free(pngquant_image *input_image);
 static void pngquant_output_image_free(png8_image *output_image);
 static histogram *get_histogram(pngquant_image *input_image, struct pngquant_options *options);
-static pngquant_error read_image(const char *filename, int using_stdin, png24_image *input_image_p);
-static pngquant_error write_image(png8_image *output_image, png24_image *output_image24, const char *outname, struct pngquant_options *options);
-static bool file_exists(const char *outname);
+static pngquant_error read_image(char *file, png24_image *input_image_p);
+static pngquant_error write_image(png8_image *output_image, png24_image *output_image24, struct rwpng_write_data *out, struct pngquant_options *options);
+//static bool file_exists(const char *outname);
 
 
 #if USE_SSE
@@ -127,7 +127,7 @@ static double quality_to_mse(long quality)
     return 1.1/pow(210.0 + quality, 1.2) * (100.1-quality)/100.0;
 }
 
-int pngquant_file(const char *filename, const char *newext, struct pngquant_options *options);
+int pngquant_file(char *file, struct rwpng_write_data *out, struct pngquant_options *options);
 
 struct pngquant_options opts = {
        .reqcolors = 256,
@@ -140,29 +140,35 @@ struct pngquant_options opts = {
    };
 
 
-
-JNIEXPORT jint JNICALL Java_Pngquant_compress (JNIEnv *env, jobject obj, jstring javaStringIn, jstring javaStringOut)
+JNIEXPORT jbyteArray JNICALL Java_Pngquant_compress (JNIEnv *env, jobject obj, jbyteArray byteIn)
 {
-	const char *filename = (*env)->GetStringUTFChars(env, javaStringIn, 0);
-	const char *outname = (*env)->GetStringUTFChars(env, javaStringOut, 0);
-    
-    #if USE_SSE
+	jbyte *bufferPtr = (*env)->GetByteArrayElements(env, byteIn, NULL);
+
+	#if USE_SSE
 	    if (!is_sse2_available()) {
 	        fputs("SSE2-capable CPU is required for this build.\n", stderr);
-	        return WRONG_ARCHITECTURE;
+	        return (*env)->NewByteArray(env, 0);
 	    }
 	#endif
 
-    int retval = pngquant_file(filename, outname, &opts);
 
-    verbose_printf_flush(&opts);
-	
-	return retval;
-}
+	struct rwpng_write_data out = {NULL, 0};
+	int retval = pngquant_file(bufferPtr, &out, &opts);
+	verbose_printf_flush(&opts);
 
-JNIEXPORT void JNICALL Java_Pngquant_force (JNIEnv *env, jobject obj, jboolean enabled)
-{ 
-	opts.force = enabled;
+	(*env)->ReleaseByteArrayElements(env, byteIn, bufferPtr, 0);
+
+	if (retval) {
+		fprintf(stderr, "ERROR: %i\n", retval);
+
+		return (*env)->NewByteArray(env, 0);
+	}
+
+	jbyteArray result = (*env)->NewByteArray(env, out.bytes_write);
+	(*env)->SetByteArrayRegion(env, result, 0, out.bytes_write, out.data);
+
+	free(out.data);
+	return result;
 }
 
 JNIEXPORT void JNICALL Java_Pngquant_verbose (JNIEnv *env, jobject obj, jboolean enabled)
@@ -216,22 +222,13 @@ static void pngquant_output_image_free(png8_image *output_image)
     }
 }
 
-int pngquant_file(const char *filename, const char *outname, struct pngquant_options *options)
+int pngquant_file(char *file, struct rwpng_write_data *out, struct pngquant_options *options)
 {
     int retval = 0;
 
-    verbose_printf(options, "%s:", filename);
-
-    if (!options->using_stdin) {
-        if (!options->force && file_exists(outname)) {
-            fprintf(stderr, "  error:  %s exists; not overwriting\n", outname);
-            retval = NOT_OVERWRITING_ERROR;
-        }
-    }
-
     pngquant_image input_image = {}; // initializes all fields to 0
     if (!retval) {
-        retval = read_image(filename, options->using_stdin, &input_image.rwpng_image);
+        retval = read_image(file, &input_image.rwpng_image);
     }
 
     png8_image output_image = {};
@@ -263,12 +260,12 @@ int pngquant_file(const char *filename, const char *outname, struct pngquant_opt
     }
 
     if (!retval) {
-        retval = write_image(&output_image, NULL, outname, options);
+        retval = write_image(&output_image, NULL, out, options);
     } else if (TOO_LOW_QUALITY == retval && options->using_stdin) {
         // when outputting to stdout it'd be nasty to create 0-byte file
         // so if quality is too low, output 24-bit original
         if (!input_image.modified) {
-            int write_retval = write_image(NULL, &input_image.rwpng_image, outname, options);
+            int write_retval = write_image(NULL, &input_image.rwpng_image, out, options);
             if (write_retval) retval = write_retval;
         } else {
             // iebug preprocessing changes the original image
@@ -579,7 +576,7 @@ static void remap_to_palette_floyd(png24_image *input_image, png8_image *output_
     nearest_free(n);
 }
 
-static bool file_exists(const char *outname)
+/*static bool file_exists(const char *outname)
 {
     FILE *outfile = fopen(outname, "rb");
     if ((outfile ) != NULL) {
@@ -587,19 +584,26 @@ static bool file_exists(const char *outname)
         return true;
     }
     return false;
-}
+}*/
 
 
-static void set_binary_mode(FILE *fp)
+/*static void set_binary_mode(FILE *fp)
 {
 #if defined(WIN32) || defined(__WIN32__)
     setmode(fp == stdout ? 1 : 0, O_BINARY);
 #endif
-}
+}*/
 
-static pngquant_error write_image(png8_image *output_image, png24_image *output_image24, const char *outname, struct pngquant_options *options)
+static pngquant_error write_image(png8_image *output_image, png24_image *output_image24, struct rwpng_write_data *out, struct pngquant_options *options)
 {
-    FILE *outfile;
+
+    if (output_image) {
+        verbose_printf(options, "  writing %d-color image", output_image->num_palette);
+    } else {
+        verbose_printf(options, "  writing truecolor image");
+    }
+
+    /*FILE *outfile;
     if (options->using_stdin) {
         set_binary_mode(stdout);
         outfile = stdout;
@@ -624,24 +628,20 @@ static pngquant_error write_image(png8_image *output_image, png24_image *output_
         } else {
             verbose_printf(options, "  writing truecolor image as %s", outfilename);
         }
-    }
-
+    }*/
     pngquant_error retval;
     #pragma omp critical (libpng)
     {
         if (output_image) {
-            retval = rwpng_write_image8(outfile, output_image);
+            retval = rwpng_write_image8(out, output_image);
         } else {
-            retval = rwpng_write_image24(outfile, output_image24);
+            retval = rwpng_write_image24(out, output_image24);
         }
     }
 
     if (retval) {
-        fprintf(stderr, "  error: failed writing image to %s\n", outname);
+        fprintf(stderr, "  error: failed writing image\n");
     }
-
-    if (!options->using_stdin)
-        fclose(outfile);
 
     return retval;
 }
@@ -721,26 +721,13 @@ static void modify_alpha(png24_image *input_image, const float min_opaque_val)
     }
 }
 
-static pngquant_error read_image(const char *filename, int using_stdin, png24_image *input_image_p)
+static pngquant_error read_image(char *file, png24_image *input_image_p)
 {
-    FILE *infile;
-
-    if (using_stdin) {
-        set_binary_mode(stdin);
-        infile = stdin;
-    } else if ((infile = fopen(filename, "rb")) == NULL) {
-        fprintf(stderr, "  error: cannot open %s for reading\n", filename);
-        return READ_ERROR;
-    }
-
     pngquant_error retval;
     #pragma omp critical (libpng)
     {
-            retval = rwpng_read_image24(infile, input_image_p);
+            retval = rwpng_read_image24(file, input_image_p);
     }
-
-    if (!using_stdin)
-        fclose(infile);
 
     if (retval) {
         fprintf(stderr, "  error: rwpng_read_image() error %d\n", retval);

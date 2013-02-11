@@ -1,17 +1,17 @@
-# pngquant
+#pngquant
 
-http://pngquant.org/
+[http://pngquant.org](http://pngquant.org)
 
 Install libpng & zlib
 
 Alternatively, build libpng and zlib in these directories:
 
-  ../libpng
-  ../zlib
+  `../libpng`
+  `../zlib`
 
 	$ make
 
-# Installation Mac
-	$ ln -s libpngquant.so /Library/Java/Extensions/libpngquant.jnilib
+##Installation Mac
+	$ cp libpngquant.so /Library/Java/Extensions/libpngquant.jnilib
 
 
