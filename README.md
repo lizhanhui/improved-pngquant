@@ -6,8 +6,8 @@ Install libpng & zlib
 
 Alternatively, build libpng and zlib in these directories:
 
-	$ ../libpng
-	$ ../zlib
+  ../libpng
+  ../zlib
 
 	$ make
 
