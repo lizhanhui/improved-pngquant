@@ -140,7 +140,7 @@ struct pngquant_options opts = {
    };
 
 
-JNIEXPORT jbyteArray JNICALL Java_Pngquant_compress (JNIEnv *env, jobject obj, jbyteArray byteIn)
+JNIEXPORT jbyteArray JNICALL Java_com_s24_image_improved_pngquant_Pngquant_compress (JNIEnv *env, jobject obj, jbyteArray byteIn)
 {
 	jbyte *bufferPtr = (*env)->GetByteArrayElements(env, byteIn, NULL);
 
@@ -171,7 +171,7 @@ JNIEXPORT jbyteArray JNICALL Java_Pngquant_compress (JNIEnv *env, jobject obj, j
 	return result;
 }
 
-JNIEXPORT void JNICALL Java_Pngquant_verbose (JNIEnv *env, jobject obj, jboolean enabled)
+JNIEXPORT void JNICALL Java_com_s24_image_improved_pngquant_Pngquant_verbose (JNIEnv *env, jobject obj, jboolean enabled)
 {
 	if (enabled)
 	{
@@ -183,7 +183,7 @@ JNIEXPORT void JNICALL Java_Pngquant_verbose (JNIEnv *env, jobject obj, jboolean
 	}
 }
 
-JNIEXPORT void JNICALL Java_Pngquant_quality (JNIEnv *env, jobject obj, jint min, jint max)
+JNIEXPORT void JNICALL Java_com_s24_image_improved_pngquant_Pngquant_quality (JNIEnv *env, jobject obj, jint min, jint max)
 {
 	opts.max_mse = quality_to_mse(min);
 	opts.target_mse = quality_to_mse(max);

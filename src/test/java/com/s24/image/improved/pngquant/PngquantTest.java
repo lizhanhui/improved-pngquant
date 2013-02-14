@@ -1,3 +1,4 @@
+package com.s24.image.improved.pngquant;
 import static org.junit.Assert.assertEquals;
 
 import java.awt.image.BufferedImage;
@@ -10,6 +11,7 @@ import javax.imageio.ImageIO;
 
 import org.junit.Before;
 import org.junit.Test;
+
 
 
 public class PngquantTest {

@@ -1,3 +1,4 @@
+package com.s24.image.improved.pngquant;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
