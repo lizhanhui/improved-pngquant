@@ -15,10 +15,10 @@ CUSTOMZLIB ?= ../zlib
 
 CFLAGSOPT ?= -O3 -fearly-inlining -fstrict-aliasing -ffast-math -funroll-loops -fomit-frame-pointer -momit-leaf-frame-pointer -ffinite-math-only -fno-trapping-math -funsafe-loop-optimizations -fPIC
 
-CFLAGS ?= -DNDEBUG -Wall -Wno-unknown-pragmas -I. -I$(CUSTOMLIBPNG) -I$(CUSTOMZLIB) -I/System/Library/Frameworks/JavaVM.framework/Headers/ -I/usr/local/include/ -I/usr/include/ -I/usr/X11/include/ $(CFLAGSOPT)
+CFLAGS ?= -DNDEBUG -Wall -Wno-unknown-pragmas -I. -I$(CUSTOMLIBPNG) -I$(CUSTOMZLIB) -I/System/Library/Frameworks/JavaVM.framework/Headers/ -I/usr/local/include/ -I/usr/include/ -I/usr/X11/include/ -I/opt/local/include/ $(CFLAGSOPT)
 CFLAGS += -std=c99 $(CFLAGSADD)
 
-LDFLAGS ?= -L$(CUSTOMLIBPNG) -L$(CUSTOMZLIB) -L/usr/local/lib/ -L/usr/lib/ -L/usr/X11/lib/
+LDFLAGS ?= -L$(CUSTOMLIBPNG) -L$(CUSTOMZLIB) -L/opt/local/lib -L/usr/local/lib/ -L/usr/lib/ -L/usr/X11/lib/
 LDFLAGS += -lpng -lz -lm $(LDFLAGSADD) -shared
 
 OBJS = pngquant.o rwpng.o pam.o mediancut.o blur.o mempool.o viter.o nearest.o
