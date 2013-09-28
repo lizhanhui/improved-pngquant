@@ -1,13 +1,18 @@
 # Makefile for pngquant
 VERSION = $(shell grep 'define PNGQUANT_VERSION' pngquant.c | egrep -Eo '1\.[0-9.]*')
 
+# get the arch
+ARCH := $(shell getconf LONG_BIT)
+
 # This changes default "cc" to "gcc", but still allows customization of the CC variable
 # if this line causes problems with non-GNU make, just remove it:
 CC := $(patsubst cc,gcc,$(CC))
 
-BIN ?= libpngquant.so
+LIB ?= libpngquant.so
 PREFIX ?= /usr/local
-BINPREFIX = $(PREFIX)/bin
+LIBPREFIX_32 := $(PREFIX)/lib
+LIBPREFIX_64 := $(PREFIX)/lib64
+LIBPREFIX := $(LIBPREFIX_$(ARCH))
 
 # Alternatively, build libpng and zlib in these directories:
 CUSTOMLIBPNG ?= ../libpng
@@ -34,12 +39,12 @@ OBJS += $(COCOA_OBJS)
 LDFLAGS += -framework Cocoa
 endif
 
-all: $(BIN)
+all: $(LIB)
 
 openmp::
 	$(MAKE) CFLAGSADD=-fopenmp LDFLAGSADD="-Bstatic -lgomp" -j8 $(MAKEFLAGS)
 
-$(BIN): $(OBJS)
+$(LIB): $(OBJS)
 	$(CC) $(OBJS) $(LDFLAGS) -o $@
 
 rwpng_cocoa.o: rwpng_cocoa.m
@@ -47,11 +52,11 @@ rwpng_cocoa.o: rwpng_cocoa.m
 
 $(OBJS): pam.h rwpng.h
 
-install: $(BIN)
-	install -m 0755 -p -D $(BIN) $(DESTDIR)$(BINPREFIX)/$(BIN)
+install: $(LIB)
+	install -m 0755 -p -D $(LIB) $(DESTDIR)$(LIBPREFIX)/$(LIB)
 
 uninstall:
-	rm -f $(DESTDIR)$(BINPREFIX)/$(BIN)
+	rm -f $(DESTDIR)$(LIBREFIX)/$(LIB)
 
 dist: $(TARFILE)
 
@@ -64,7 +69,7 @@ $(TARFILE): $(DISTFILES)
 	shasum $(TARFILE)
 
 clean:
-	rm -f $(BIN) $(OBJS) $(COCOA_OBJS) $(TARFILE)
+	rm -f $(LIB) $(OBJS) $(COCOA_OBJS) $(TARFILE)
 
 .PHONY: all openmp install uninstall dist clean
 .DELETE_ON_ERROR:
