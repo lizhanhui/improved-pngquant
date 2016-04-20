@@ -8,7 +8,7 @@ ARCH := $(shell getconf LONG_BIT)
 # if this line causes problems with non-GNU make, just remove it:
 CC := $(patsubst cc,gcc,$(CC))
 
-LIB ?= libpngquant.so
+LIB ?= libpngquant.dylib
 PREFIX ?= /usr/local
 LIBPREFIX_32 := $(PREFIX)/lib
 LIBPREFIX_64 := $(PREFIX)/lib64
@@ -18,7 +18,7 @@ LIBPREFIX := $(LIBPREFIX_$(ARCH))
 CUSTOMLIBPNG ?= ../libpng
 CUSTOMZLIB ?= ../zlib
 
-CFLAGSOPT ?= -O3 -fearly-inlining -fstrict-aliasing -ffast-math -funroll-loops -fomit-frame-pointer -momit-leaf-frame-pointer -ffinite-math-only -fno-trapping-math -funsafe-loop-optimizations -fPIC
+CFLAGSOPT ?= -O3 -fstrict-aliasing -ffast-math -funroll-loops -fomit-frame-pointer -momit-leaf-frame-pointer -ffinite-math-only -fno-trapping-math -funsafe-loop-optimizations -fPIC
 
 CFLAGS ?= -DNDEBUG -Wall -Wno-unknown-pragmas -I. -I$(CUSTOMLIBPNG) -I$(CUSTOMZLIB) -I/System/Library/Frameworks/JavaVM.framework/Headers/ -I/usr/local/include/ -I/usr/include/ -I/usr/X11/include/ -I/opt/local/include/ $(CFLAGSOPT)
 CFLAGS += -std=c99 $(CFLAGSADD) -fPIC

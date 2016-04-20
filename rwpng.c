@@ -226,7 +226,7 @@ pngquant_error rwpng_read_image24(char *infile, png24_image *input_image_p)
 }
 
 
-pngquant_error rwpng_write_image_init(png_image *mainprog_ptr, png_structpp png_ptr_p, png_infopp info_ptr_p, struct rwpng_write_data *write_data)
+pngquant_error rwpng_write_image_init(png_image_u *mainprog_ptr, png_structpp png_ptr_p, png_infopp info_ptr_p, struct rwpng_write_data *write_data)
 {
     /* could also replace libpng warning-handler (final NULL), but no need: */
 
@@ -292,7 +292,7 @@ pngquant_error rwpng_write_image8(struct rwpng_write_data *write_data, png8_imag
     png_structp png_ptr;
     png_infop info_ptr;
 
-    pngquant_error retval = rwpng_write_image_init((png_image*)mainprog_ptr, &png_ptr, &info_ptr, write_data);
+    pngquant_error retval = rwpng_write_image_init((png_image_u *)mainprog_ptr, &png_ptr, &info_ptr, write_data);
 
 
     if (retval) return retval;
@@ -338,7 +338,7 @@ pngquant_error rwpng_write_image24(struct rwpng_write_data *write_data, png24_im
     png_structp png_ptr;
     png_infop info_ptr;
 
-    pngquant_error retval = rwpng_write_image_init((png_image*)mainprog_ptr, &png_ptr, &info_ptr, write_data);
+    pngquant_error retval = rwpng_write_image_init((png_image_u *)mainprog_ptr, &png_ptr, &info_ptr, write_data);
     if (retval) return retval;
 
     rwpng_set_gamma(info_ptr, png_ptr, mainprog_ptr->gamma);
@@ -363,7 +363,7 @@ pngquant_error rwpng_write_image24(struct rwpng_write_data *write_data, png24_im
 
 static void rwpng_error_handler(png_structp png_ptr, png_const_charp msg)
 {
-    png_image  *mainprog_ptr;
+    png_image_u  *mainprog_ptr;
 
     /* This function, aside from the extra step of retrieving the "error
      * pointer" (below) and the fact that it exists within the application

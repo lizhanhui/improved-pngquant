@@ -80,7 +80,7 @@ typedef union {
     jmp_buf jmpbuf;
     png24_image png24;
     png8_image png8;
-} png_image;
+} png_image_u;
 
 struct rwpng_write_data {
     char *data;

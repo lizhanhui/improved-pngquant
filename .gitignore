@@ -6,3 +6,6 @@
 build
 DerivedData
 pngquant
+.idea
+*.iml
+target
